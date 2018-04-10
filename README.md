@@ -2,3 +2,5 @@
 Example repository to play and learn
 
 Adding a line to README.md
+
+Now adding another new line.

@@ -6,11 +6,10 @@ from random import randint
 import time
 
 parser = argparse.ArgumentParser(description='Times tables tester')
-parser.add_argument('--numbers', nargs='+', type=int, required=True, help='Numbers to include in tables testing')
+parser.add_argument('--numbers', nargs='+', type=int, default=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], help='Numbers to include in tables testing')
 parser.add_argument('--num_questions', type=int, default=10, help='Number of questions')
 parser.add_argument('--style', type=str, default="sensible", help='style: daddy, mummy, nicholas, bridget, sophie')
 
-args = parser.parse_args()
 
 tables = []
 for x in range(13):
@@ -40,12 +39,14 @@ comments["daddy"].append(["Good show, what?!", "OOoooo, I do say!", "Jolly good.
 			,"You might be almost as awesome as Daddy!", "Fandablidocious!", "GOAAAAAAAAAAAAAAAAAAAL!!!!!", "Magnificantoooooooo!", "Oh, I do say! How clever?!"\
 			,"I doff my cap to you!", "Most splendid indeed", "extremely intelligent you are!", "Why, one might even entertain the idea that you have a brain..." \
 			,"Good gracious me - you got it!", "FAN - DABBY - DOZY!!!", "Spiffing!", "Alright!!! Who told you the answer?!! Come on! Out with it!" \
-			,"Well who'd have known?..", "Rather!", "Top notch!"])
+			,"Well who'd have known?..", "Rather!", "Top notch!", "Fandibblyriffic.", "We may have to stop sending you to school..." \
+			,"Just terrific!", "Wowser!", "How terribly clever!"])
 
 # define daddy incorrect comments
 comments["daddy"].append(["BZZZZZZZZZ. Too bad...", "Oooooopsy daisy.", "Ya numpty!", "Dumb bum.", "Deary me. You really are lacking brains." \
 			,"Poo brain!", "Are you the silliest person on the planet?","How very unintelligent!", "Oh boy! <shaking of head>", "Sheeesh! I hope we aren't related..." \
-			, "How terribly unfortunate!", "Dumb and dumber!", "Is that level of numptidome even possible?", "Hmmmm. Indeed. Let's take an X-ray of your head..."])
+			, "How terribly unfortunate!", "Dumb and dumber!", "Is that level of numptidome even possible?", "Hmmmm. Indeed. Let's take an X-ray of your head..." \
+			, "Yikes! Ouch...", "You're hurting my ears!", "Not spiffing!"])
 
 # define sophie correct comments
 comments["sophie"].append(["Meh...", "I can do better...", "Psssh, whatever...", "Slow coach.", "Uuuurgh! This is so booooring - get something wrong already." \
@@ -106,48 +107,67 @@ def hint(i, j, args):
 	return 0
 
 def tables_loop(args, comments):
-	print "\nIF YOU NEED A HINT FOR ANY QUESTION, ENTER 'h' or 'hint'...\n\n"
-	counter = 0
-	correct_counter = 0
-	for y in range(args.num_questions):
-		i = random.choice(tables)
-		j = random.choice(args.numbers)
-		counter += 1
-		print "Q.{} of {}: What is {} x {}?".format(counter,args.num_questions,i,j) + "\n"
+	print "\nIF YOU NEED A HINT FOR ANY QUESTION, ENTER 'h' or 'hint'...\n"
+	q_counter = 0			# set the questions asked so far counter to zero
+	correct_counter = 0			# set the correct answers so far counter to zero
+	for y in range(args.num_questions):			# iterate through for the specified number of questions
+		i = random.choice(tables)			# randomly select the first number from tables - a list including 0 to 12, inclusive
+		j = random.choice(args.numbers)			# randomly select the second number from the input list of numbers
+		q_counter += 1			# increment the questions asked counter 
+		print "Q.{} of {}: What is {} x {}?".format(q_counter,args.num_questions,i,j) + "\n"
 		ranswer = (i * j)
-		answer = raw_input()
-# INTRODUCE HINT HANDLING HERE
-		if str(answer) in ["h", "help", "H", "HELP", "hint", "HINT"]:
+		answer = raw_input()			# takes input as a string
+		while str(answer) in ["h", "help", "H", "HELP", "hint", "HINT"]:			# provide hint while requested
 			hint(i, j, args)
-			answer = input()
-		if int(answer) == ranswer:
+			answer = raw_input()
+		while reps_int(answer) == False:			# check whether an integer was entered
+			print "You need to enter a whole number! Try again...\n"
+			answer = raw_input()
+		if int(answer) == ranswer:			# check whether correct answer was entered
 			correct_counter += 1
-			index = randint(0, len(comments[args.style][0]) - 1)
-			print "\n" + comments[args.style][0][index] + "\n"
-			time.sleep(1.0/2.0)
+			correct_comment_index = randint(0, len(comments[args.style][0]) - 1)
+			print "\n" + comments[args.style][0][correct_comment_index] + "\n"
+			time.sleep(1.0)
 		else:
-			index = randint(0, len(comments[args.style][1]) - 1)
-			print "\n" + comments[args.style][1][index] + "\n"
-			time.sleep(1.0/2.0)
+			incorrect_comment_index = randint(0, len(comments[args.style][1]) - 1)
+			print "\n" + comments[args.style][1][incorrect_comment_index] + "\n"
+			time.sleep(1.0)
 			print "The correct answer was {}".format(ranswer) + "\n"
-			time.sleep(1.0/2.0)
-	return correct_counter, counter
+		percent_correct = int((float(correct_counter)/q_counter) * 100)
+		if q_counter < args.num_questions:
+			print "So far you have scored {} out of {}...\n".format(correct_counter, q_counter)
+		elif q_counter == args.num_questions:
+			print "You scored {} out of {}...\n".format(correct_counter, q_counter)
+		time.sleep(2.0)			# pause a little while
+	return percent_correct
+
+# Function to check whether a string represents an integer
+def reps_int(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 
 def main():
-	x,y = tables_loop(args, comments)
-	percent_correct = int((float(x)/y) * 100)
+	args = parser.parse_args()
+	if args.style not in valid_styles:			# check for valid style input
+		exit("Try again - check the spelling of --style")
+	percent_correct = tables_loop(args, comments)
 	if percent_correct == float(100):
-		print "\n\nBrilliant!!! You scored {}%!!!!".format(percent_correct)
+		print "\nBrilliant!!! That gives you {}%!!!!".format(percent_correct)
 	elif 90.0 <= percent_correct < 100:
-		print "\n\nVery good!!! A solid performance of {}%!!!!".format(percent_correct)
+		print "\nVery good!!! A solid performance of {}%!!!!".format(percent_correct)
 	elif 80.0 <= percent_correct < 90:
-		print "\n\nPretty good, with {}%. Could do with a bit more practice...".format(percent_correct)
+		print "\nPretty good, with {}%. Could do with a bit more practice...".format(percent_correct)
 	else:
-		print "\n\nYou scored {}%. You'll do better with some more practice...".format(percent_correct)
-	print "\n\n"
+		print "\nYou got {}%. You'll do better with some more practice...".format(percent_correct)
+	print "\n"
 
 if __name__ == "__main__":
 	main()
+
 
 
 
